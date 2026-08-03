@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Popup Box2D Playground</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">Plain HTML visuals + real browser windows</p>
+      <h1>Popup Box2D Playground</h1>
+      <p class="lede">
+        A tiny physics toy where every body is a small popup window. Grant popup permission,
+        then drag, shove, and bounce the windows around your screen.
+      </p>
+      <div class="actions">
+        <button id="startButton" type="button">Check popups & start</button>
+        <button id="kickButton" type="button" disabled>Kick all windows</button>
+        <button id="closeButton" type="button" disabled>Close popups</button>
+      </div>
+      <p id="status" class="status">Click start. Your browser should ask whether this page may open popups.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="how-to-play">
+      <h2 id="how-to-play">How to play</h2>
+      <ul>
+        <li>Drag a popup by holding inside it. Release to throw it.</li>
+        <li>Click a popup to punch it with a random impulse.</li>
+        <li>Use <strong>Kick all windows</strong> if they settle down.</li>
+        <li>If motion stutters while dragging, that is normal: browsers throttle cross-window moves.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
