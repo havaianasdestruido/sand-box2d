@@ -3,19 +3,6 @@ const POPUP_WIDTH = 168;
 const POPUP_HEIGHT = 118;
 const STEP_MS = 1000 / 45;
 const COLORS = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#b8f7d4', '#cdb4db', '#90dbf4', '#f4a261', '#f7ede2'];
-const POPUP_FEATURES = [
-  'popup=yes',
-  'toolbar=no',
-  'menubar=no',
-  'location=no',
-  'status=no',
-  'scrollbars=no',
-  'resizable=no',
-  `width=${POPUP_WIDTH}`,
-  `height=${POPUP_HEIGHT}`,
-  `innerWidth=${POPUP_WIDTH}`,
-  `innerHeight=${POPUP_HEIGHT}`
-];
 
 const startButton = document.querySelector('#startButton');
 const kickButton = document.querySelector('#kickButton');
@@ -31,7 +18,7 @@ function setStatus(message) {
 }
 
 function testPopupPermission() {
-  const probe = window.open('', 'popup-physics-permission-test', 'popup=yes,width=80,height=60,innerWidth=80,innerHeight=60,left=80,top=80');
+  const probe = window.open('', 'popup-physics-permission-test', 'popup,width=80,height=60,left=80,top=80');
   if (!probe || probe.closed) return false;
   probe.document.write('<!doctype html><title>OK</title><body style="font-family:Arial">Popup check OK</body>');
   probe.document.close();
@@ -42,25 +29,21 @@ function testPopupPermission() {
 function popupHtml(index, color) {
   return `<!doctype html>
 <html><head><title>Body ${index + 1}</title><style>
-html,body{width:${POPUP_WIDTH}px;height:${POPUP_HEIGHT}px;margin:0;overflow:hidden;font-family:Arial,Helvetica,sans-serif;background:${color};color:#111;user-select:none;cursor:grab}
+html,body{height:100%;margin:0;overflow:hidden;font-family:Arial,Helvetica,sans-serif;background:${color};color:#111;user-select:none;cursor:grab}
 body{border:5px solid #111;display:grid;place-items:center;text-align:center}
 body:active{cursor:grabbing}.box{padding:8px}.name{font-size:34px;font-weight:900;line-height:1}.hint{font-size:12px;font-weight:700;margin-top:6px}
-</style></head><body data-index="${index}"><div class="box"><div class="name">#${index + 1}</div><div class="hint">drag me<br>click = punch</div></div><script>window.resizeTo(${POPUP_WIDTH},${POPUP_HEIGHT});<\/script></body></html>`;
+</style></head><body data-index="${index}"><div class="box"><div class="name">#${index + 1}</div><div class="hint">drag me<br>click = punch</div></div></body></html>`;
 }
 
 function spawnBody(index) {
   const x = Math.round(screen.availLeft + 120 + Math.random() * Math.max(80, screen.availWidth - 360));
   const y = Math.round(screen.availTop + 120 + Math.random() * Math.max(80, screen.availHeight - 320));
   const color = COLORS[index % COLORS.length];
-  const blobUrl = URL.createObjectURL(new Blob([popupHtml(index, color)], { type: 'text/html' }));
-  const popup = window.open(blobUrl, `popup-box2d-body-${Date.now()}-${index}`, [...POPUP_FEATURES, `left=${x}`, `top=${y}`].join(','));
-  if (!popup || popup.closed) {
-    URL.revokeObjectURL(blobUrl);
-    return null;
-  }
+  const popup = window.open('', `popup-box2d-body-${Date.now()}-${index}`, `popup,width=${POPUP_WIDTH},height=${POPUP_HEIGHT},left=${x},top=${y}`);
+  if (!popup || popup.closed) return null;
 
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-  keepPopupSmall(popup, x, y);
+  popup.document.write(popupHtml(index, color));
+  popup.document.close();
 
   const body = {
     popup, x, y,
@@ -72,26 +55,18 @@ function spawnBody(index) {
     dragDX: 0,
     dragDY: 0,
     lastDragX: x,
-    lastDragY: y,
-    lastResize: 0
+    lastDragY: y
   };
 
   popup.addEventListener('beforeunload', () => { body.closed = true; });
-  const installPopupHandlers = () => {
-    if (!popup.document || !popup.document.body) return;
-    popup.document.body.addEventListener('pointerdown', (event) => {
+  popup.document.body.addEventListener('pointerdown', (event) => {
     body.dragging = true;
     body.dragDX = event.screenX - body.x;
     body.dragDY = event.screenY - body.y;
     body.lastDragX = body.x;
     body.lastDragY = body.y;
   });
-    popup.document.body.addEventListener('click', () => punch(body));
-  };
-
-  if (popup.document?.readyState === 'complete') installPopupHandlers();
-  else popup.addEventListener('load', installPopupHandlers, { once: true });
-
+  popup.document.body.addEventListener('click', () => punch(body));
   popup.addEventListener('pointerup', () => { body.dragging = false; });
   popup.addEventListener('pointermove', (event) => {
     if (!body.dragging) return;
@@ -104,15 +79,6 @@ function spawnBody(index) {
   });
 
   return body;
-}
-
-function keepPopupSmall(popup, x, y) {
-  try {
-    popup.resizeTo(POPUP_WIDTH, POPUP_HEIGHT);
-    popup.moveTo(Math.round(x), Math.round(y));
-  } catch {
-    // Some browsers disallow resizing/moving windows. The game still cleans these up later.
-  }
 }
 
 function punch(body) {
@@ -184,10 +150,6 @@ function tick() {
 
   bodies.forEach((body) => {
     try {
-      if (now - body.lastResize > 500) {
-        body.popup.resizeTo(POPUP_WIDTH, POPUP_HEIGHT);
-        body.lastResize = now;
-      }
       body.popup.moveTo(Math.round(body.x), Math.round(body.y));
     } catch {
       body.closed = true;
