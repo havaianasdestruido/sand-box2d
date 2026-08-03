@@ -3,19 +3,6 @@ const POPUP_WIDTH = 168;
 const POPUP_HEIGHT = 118;
 const STEP_MS = 1000 / 45;
 const COLORS = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#b8f7d4', '#cdb4db', '#90dbf4', '#f4a261', '#f7ede2'];
-const POPUP_FEATURES = [
-  'popup=yes',
-  'toolbar=no',
-  'menubar=no',
-  'location=no',
-  'status=no',
-  'scrollbars=no',
-  'resizable=no',
-  `width=${POPUP_WIDTH}`,
-  `height=${POPUP_HEIGHT}`,
-  `innerWidth=${POPUP_WIDTH}`,
-  `innerHeight=${POPUP_HEIGHT}`
-];
 
 const startButton = document.querySelector('#startButton');
 const kickButton = document.querySelector('#kickButton');
@@ -31,7 +18,7 @@ function setStatus(message) {
 }
 
 function testPopupPermission() {
-  const probe = window.open('', 'popup-physics-permission-test', 'popup=yes,width=80,height=60,innerWidth=80,innerHeight=60,left=80,top=80');
+  const probe = window.open('', 'popup-physics-permission-test', 'popup,width=80,height=60,left=80,top=80');
   if (!probe || probe.closed) return false;
   probe.document.write('<!doctype html><title>OK</title><body style="font-family:Arial">Popup check OK</body>');
   probe.document.close();
@@ -52,12 +39,11 @@ function spawnBody(index) {
   const x = Math.round(screen.availLeft + 120 + Math.random() * Math.max(80, screen.availWidth - 360));
   const y = Math.round(screen.availTop + 120 + Math.random() * Math.max(80, screen.availHeight - 320));
   const color = COLORS[index % COLORS.length];
-  const popup = window.open('', `popup-box2d-body-${Date.now()}-${index}`, [...POPUP_FEATURES, `left=${x}`, `top=${y}`].join(','));
+  const popup = window.open('', `popup-box2d-body-${Date.now()}-${index}`, `popup,width=${POPUP_WIDTH},height=${POPUP_HEIGHT},left=${x},top=${y}`);
   if (!popup || popup.closed) return null;
 
   popup.document.write(popupHtml(index, color));
   popup.document.close();
-  keepPopupSmall(popup, x, y);
 
   const body = {
     popup, x, y,
@@ -69,8 +55,7 @@ function spawnBody(index) {
     dragDX: 0,
     dragDY: 0,
     lastDragX: x,
-    lastDragY: y,
-    lastResize: 0
+    lastDragY: y
   };
 
   popup.addEventListener('beforeunload', () => { body.closed = true; });
@@ -94,15 +79,6 @@ function spawnBody(index) {
   });
 
   return body;
-}
-
-function keepPopupSmall(popup, x, y) {
-  try {
-    popup.resizeTo(POPUP_WIDTH, POPUP_HEIGHT);
-    popup.moveTo(Math.round(x), Math.round(y));
-  } catch {
-    // Some browsers disallow resizing/moving windows. The game still cleans these up later.
-  }
 }
 
 function punch(body) {
@@ -174,10 +150,6 @@ function tick() {
 
   bodies.forEach((body) => {
     try {
-      if (now - body.lastResize > 500) {
-        body.popup.resizeTo(POPUP_WIDTH, POPUP_HEIGHT);
-        body.lastResize = now;
-      }
       body.popup.moveTo(Math.round(body.x), Math.round(body.y));
     } catch {
       body.closed = true;
